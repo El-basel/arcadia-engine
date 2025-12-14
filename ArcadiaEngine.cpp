@@ -451,12 +451,44 @@ string WorldNavigator::sumMinDistancesBinary(int n, vector<vector<int>>& roads) 
 // PART D: SERVER KERNEL (Greedy)
 // =========================================================
 
+// Helper function to find the best task to schedule next
+int findBestTask(const vector<int>& frequencies, const vector<int>& nextAvailableTime, int currentTime) {
+    int bestTaskIndex = -1;
+    int maxFreq= -1;
+
+    for (int i = 0; i < frequencies.size(); i++) {
+        if (frequencies[i] > 0) {
+            if (nextAvailableTime[i] <= currentTime) {
+                if (frequencies[i] > maxFreq) {
+                    maxFreq = frequencies[i];
+                    bestTaskIndex = i;
+                }
+            }
+        }
+    }
+    return bestTaskIndex;
+}
+
 int ServerKernel::minIntervals(vector<char>& tasks, int n) {
-    // TODO: Implement task scheduler with cooling time
-    // Same task must wait 'n' intervals before running again
-    // Return minimum total intervals needed (including idle time)
-    // Hint: Use greedy approach with frequency counting
-    return 0;
+    vector<int> frequencies(26, 0);
+    vector<int> nextAvailableTime(26, 0);
+    int currentTime = 0;
+    int tasksRemaining = tasks.size();
+
+    for(int i = 0; i < tasks.size(); i++) {
+        frequencies[tasks[i] - 'A']++;
+    }
+
+    while(tasksRemaining > 0) {
+        int bestTaskIndex = findBestTask(frequencies, nextAvailableTime, currentTime);
+        if (bestTaskIndex != -1) {
+            frequencies[bestTaskIndex]--;
+            nextAvailableTime[bestTaskIndex] = currentTime + n + 1;
+            tasksRemaining--;
+        }
+        currentTime++;
+    }
+    return currentTime;
 }
 
 // =========================================================
