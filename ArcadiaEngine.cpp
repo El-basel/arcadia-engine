@@ -24,22 +24,67 @@ using namespace std;
 
 class ConcretePlayerTable : public PlayerTable {
 private:
-    // TODO: Define your data structures here
-    // Hint: You'll need a hash table with double hashing collision resolution
+   struct PlayerData{
+     int playerID;
+     string name;
+     bool isEmpty;
+
+     PlayerData(){
+       playerID = -1;
+       isEmpty = true;
+       name = "";
+     }
+   };
+
+    int size;
+    int count;
+    PlayerData PlayerTable[101];
+
+   int h1(int key){
+     return key % size;
+   }
+
+   int h2(int key){
+     return 97 - (key % 26);
+   }
 
 public:
     ConcretePlayerTable() {
-        // TODO: Initialize your hash table
+        size = 101;
+        count = 0;
     }
 
     void insert(int playerID, string name) override {
-        // TODO: Implement double hashing insert
-        // Remember to handle collisions using h1(key) + i * h2(key)
+        int hash1 = h1(playerID);
+        int hash2 = h2(playerID);
+
+        for(int i = 0; i < size; i++) {
+            int index = (hash1 + i * hash2) % size;
+
+            if (PlayerTable[index].isEmpty) {
+                PlayerTable[index].playerID = playerID;
+                PlayerTable[index].name = name;
+                PlayerTable[index].isEmpty = false;
+                count++;
+                return;
+            }
+        }
+        cout << "Table is Full" << endl;
     }
 
     string search(int playerID) override {
-        // TODO: Implement double hashing search
-        // Return "" if player not found
+        int hash1 = h1(playerID);
+        int hash2 = h2(playerID);
+
+        for(int i = 0; i < size; i++) {
+            int index = (hash1 + i * hash2) % size;
+            if (PlayerTable[index].isEmpty) {
+                return "";
+            }
+            if (PlayerTable[index].playerID == playerID) {
+                return PlayerTable[index].name;
+            }
+        }
         return "";
     }
 };
