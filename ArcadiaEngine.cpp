@@ -148,12 +148,16 @@ private:
             parent = current;
             if(current->price > node->price) {
                 current = current->left;
+            } else if(current->price == node->price && current->id > node->id) {
+                current = current->left;
             } else {
                 current = current->right;
             }
         }
         if (root) {
             if (parent->price > node->price) {
+                parent->left = node;
+            } else if(parent->price == node->price && parent->id > node->id) {
                 parent->left = node;
             } else {
                 parent->right = node;
@@ -319,16 +323,14 @@ private:
 
         this->root->color = BLACK;
     }
-    Node* search(int id) {
-        Node* node = this->root;
-        while(node!= nullptr && node->id != id) {
-            if(node->id > id) {
-                node = node->left;
-            } else {
-                node = node->right;
-            }
+    Node* search(Node* current, int id, bool& found) {
+        if(current != nullptr && current->id == id) {
+            found = true;
+            return current;
         }
-        return node;
+        search(current->left, id, found);
+        if(!found) search(current->right, id, found);
+        return nullptr;
     }
 public:
     ConcreteAuctionTree() {
@@ -343,7 +345,12 @@ public:
 
     void deleteItem(int itemID) override {
         // This is complex - handle all cases carefully
-        Node* node_to_delete = search(itemID);
+        bool found = false;
+        Node* node_to_delete = search(this->root, itemID, found);
+        if(!found) {
+            std::cout << "Item with ID: " << itemID << " doesn't exist";
+            return;
+        }
         Node* actual_node = nullptr; // node with at most 1 child
         Node* replacement = nullptr; // child that replaces it
         if (node_to_delete->left == nullptr || node_to_delete->right == nullptr) {
@@ -379,10 +386,38 @@ public:
 // =========================================================
 
 int InventorySystem::optimizeLootSplit(int n, vector<int>& coins) {
-    // TODO: Implement partition problem using DP
-    // Goal: Minimize |sum(subset1) - sum(subset2)|
-    // Hint: Use subset sum DP to find closest sum to total/2
-    return 0;
+    int totalSum = 0;
+
+    // Calculate total sum
+    for (int coin : coins) {
+        totalSum += coin;
+    }
+
+    // DP array: dp[j] = can we make sum j?
+    vector<bool> dp(totalSum + 1, false);
+    dp[0] = true;  // Base case: we can always make sum 0
+
+    // For each number in the array
+    for (int i = 0; i < n; i++) {
+        // Traverse from right to left to avoid using same element twice
+        for (int j = totalSum; j >= coins[i]; j--) {
+            if (dp[j - coins[i]]) {
+                dp[j] = true;
+            }
+        }
+    }
+
+    // Find the largest sum <= totalSum/2 that is achievable
+    int minDiff = totalSum;
+    for (int j = totalSum / 2; j >= 0; j--) {
+        if (dp[j]) {
+            // One subset has sum j, other has sum (totalSum - j)
+            minDiff = totalSum - 2 * j;
+            break;
+        }
+    }
+
+    return minDiff;
 }
 
 int InventorySystem::maximizeCarryValue(int capacity, vector<pair<int, int>>& items) {
