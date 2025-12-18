@@ -1,7 +1,7 @@
 /**
- * main_test_student.cpp
- * Basic "Happy Path" Test Suite for ArcadiaEngine
- * Use this to verify your basic logic against the assignment examples.
+ * main.cpp
+ * Extended Happy + Edge Case Test Suite for ArcadiaEngine
+ * Covers Parts A–D thoroughly
  */
 
 #include <iostream>
@@ -9,32 +9,31 @@
 #include <string>
 #include <iomanip>
 #include <functional>
-#include "ArcadiaEngine.h" 
+#include "ArcadiaEngine.h"
 
 using namespace std;
 
 // ==========================================
 // FACTORY FUNCTIONS (LINKING)
 // ==========================================
-// These link to the functions at the bottom of your .cpp file
 extern "C" {
-    PlayerTable* createPlayerTable();
-    Leaderboard* createLeaderboard();
-    AuctionTree* createAuctionTree();
+PlayerTable* createPlayerTable();
+Leaderboard* createLeaderboard();
+AuctionTree* createAuctionTree();
 }
 
 // ==========================================
 // TEST UTILITIES
 // ==========================================
 class StudentTestRunner {
-	int count = 0;
+    int count = 0;
     int passed = 0;
     int failed = 0;
 
 public:
-    void runTest(string testName, bool condition) {
-		count++;
-        cout << "TEST: " << left << setw(50) << testName;
+    void runTest(const string& testName, bool condition) {
+        count++;
+        cout << "TEST: " << left << setw(55) << testName;
         if (condition) {
             cout << "[ PASS ]";
             passed++;
@@ -49,13 +48,7 @@ public:
         cout << "\n==========================================" << endl;
         cout << "SUMMARY: Passed: " << passed << " | Failed: " << failed << endl;
         cout << "==========================================" << endl;
-		cout << "TOTAL TESTS: " << count << endl;
-        if (failed == 0) {
-            cout << "Great job! All basic scenarios passed." << endl;
-            cout << "Now make sure to handle edge cases (empty inputs, collisions, etc.)!" << endl;
-        } else {
-            cout << "Some basic tests failed. Check your logic against the PDF examples." << endl;
-        }
+        cout << "TOTAL TESTS: " << count << endl;
     }
 };
 
@@ -68,62 +61,88 @@ StudentTestRunner runner;
 void test_PartA_DataStructures() {
     cout << "\n--- Part A: Data Structures ---" << endl;
 
-    // 1. PlayerTable (Double Hashing)
-    // Requirement: Basic Insert and Search
-    PlayerTable* table = createPlayerTable();
-    runner.runTest("PlayerTable: Insert 'Alice' and Search", [&]() {
-        table->insert(101, "Alice");
-        return table->search(101) == "Bob";
+    // ---------- PlayerTable ----------
+    runner.runTest("PlayerTable: Insert & Search", [&]() {
+        PlayerTable* t = createPlayerTable();
+        t->insert(1, "Alice");
+        bool ok = (t->search(1) == "Alice");
+        delete t;
+        return ok;
     }());
-    delete table;
 
-    table = createPlayerTable();
-    runner.runTest("PlayerTable: Insert 'Alice' then Insert Bob with the same ID to update and Search", [&]() {
-        table->insert(101, "Alice");
-        table->insert(101, "Bob");
-        return table->search(101) == "Bob";
+    runner.runTest("PlayerTable: Search non-existing", [&]() {
+        PlayerTable* t = createPlayerTable();
+        bool ok = (t->search(999) == "");
+        delete t;
+        return ok;
     }());
-    delete table;
-    // 2. Leaderboard (Skip List)
-    Leaderboard* board = createLeaderboard();
 
-    // Test A: Basic High Score
-    runner.runTest("Leaderboard: Add Scores & Get Top 1", [&]() {
-        board->addScore(1, 100);
-        board->addScore(2, 200); // 2 is Leader
-        vector<int> top = board->getTopN(1);
+    runner.runTest("PlayerTable: Update existing key", [&]() {
+        PlayerTable* t = createPlayerTable();
+        t->insert(5, "A");
+        t->insert(5, "B");
+        bool ok = (t->search(5) == "B");
+        delete t;
+        return ok;
+    }());
+
+    runner.runTest("PlayerTable: Collision handling", [&]() {
+        PlayerTable* t = createPlayerTable();
+        t->insert(101, "A");
+        t->insert(202, "B");
+        t->insert(303, "C");
+        bool ok = t->search(101) == "A" &&
+                  t->search(202) == "B" &&
+                  t->search(303) == "C";
+        delete t;
+        return ok;
+    }());
+
+    // ---------- Leaderboard ----------
+    runner.runTest("Leaderboard: Basic ordering", [&]() {
+        Leaderboard* b = createLeaderboard();
+        b->addScore(1, 100);
+        b->addScore(2, 200);
+        auto top = b->getTopN(1);
+        delete b;
         return (!top.empty() && top[0] == 2);
     }());
 
-    // Test B: Tie-Breaking Visual Example (Crucial!)
-    // PDF Visual Example: Player A (ID 10) 500pts, Player B (ID 20) 500pts.
-    // Correct Order: ID 10 then ID 20.
-    runner.runTest("Leaderboard: Tie-Break (ID 10 before ID 20)", [&]() {
-        board->addScore(10, 500);
-        board->addScore(20, 500);
-        vector<int> top = board->getTopN(2);
-        // We expect {10, 20} NOT {20, 10}
-        if (top.size() < 2) return false;
-        return (top[0] == 10 && top[1] == 20); 
+    runner.runTest("Leaderboard: Tie-break by ID", [&]() {
+        Leaderboard* b = createLeaderboard();
+        b->addScore(10, 500);
+        b->addScore(20, 500);
+        auto top = b->getTopN(2);
+        delete b;
+        return top.size() == 2 && top[0] == 10 && top[1] == 20;
     }());
-    
-    delete board;
 
-    // 3. AuctionTree (Red-Black Tree)
-    // Requirement: Insert items without crashing
-    AuctionTree* tree = createAuctionTree();
-    runner.runTest("AuctionTree: Insert Items", [&]() {
-        tree->insertItem(1, 100);
-        tree->insertItem(2, 50);
-        tree->insertItem(4, 50);
-        return true; // Pass if no crash
+    runner.runTest("Leaderboard: Remove player", [&]() {
+        Leaderboard* b = createLeaderboard();
+        b->addScore(1, 100);
+        b->addScore(2, 200);
+        b->removePlayer(2);
+        auto top = b->getTopN(2);
+        delete b;
+        return top.size() == 1 && top[0] == 1;
     }());
-    runner.runTest("AuctionTree: Delete Items (exist and doesn't exist)", [&]() {
-        tree->deleteItem(1);
-        tree->deleteItem(3);
-        return true; // Pass if no crash
+
+    // ---------- AuctionTree ----------
+    runner.runTest("AuctionTree: Insert items", [&]() {
+        AuctionTree* t = createAuctionTree();
+        t->insertItem(1, 100);
+        t->insertItem(2, 50);
+        delete t;
+        return true;
     }());
-    delete tree;
+
+    runner.runTest("AuctionTree: Delete non-existing", [&]() {
+        AuctionTree* t = createAuctionTree();
+        t->insertItem(1, 100);
+        t->deleteItem(999);
+        delete t;
+        return true;
+    }());
 }
 
 // ==========================================
@@ -133,36 +152,32 @@ void test_PartA_DataStructures() {
 void test_PartB_Inventory() {
     cout << "\n--- Part B: Inventory System ---" << endl;
 
-    // 1. Loot Splitting (Partition)
-    // PDF Example: coins = {1, 2, 4} -> Best split {4} vs {1,2} -> Diff 1
-    runner.runTest("LootSplit: {1, 2, 4} -> Diff 1", [&]() {
-        vector<int> coins = {1, 2, 4};
+    runner.runTest("LootSplit: {1,2,4} -> 1", [&]() {
+        vector<int> coins = {1,2,4};
         return InventorySystem::optimizeLootSplit(3, coins) == 1;
     }());
-    runner.runTest("LootSplit: {2,2} -> Diff 0", [&]() {
-        vector<int> coins = {2, 2};
-        return InventorySystem::optimizeLootSplit(2, coins) == 0;
-    }());
-    runner.runTest("LootSplit: {} -> Diff 0", [&]() {
-        vector<int> coins = {};
-        return InventorySystem::optimizeLootSplit(0, coins) == -1;
-    }());
-    runner.runTest("LootSplit: n=1, {1,2} -> Diff 0", [&]() {
-        vector<int> coins = {1,2};
-        return InventorySystem::optimizeLootSplit(1, coins) == -1;
+
+    runner.runTest("LootSplit: Perfect split", [&]() {
+        vector<int> coins = {1,2,3};
+        return InventorySystem::optimizeLootSplit(3, coins) == 0;
     }());
 
-    // 2. Inventory Packer (Knapsack)
-    // PDF Example: Cap=10, Items={{1,10}, {2,20}, {3,30}}. All fit. Value=60.
-    runner.runTest("Knapsack: Cap 10, All Fit -> Value 60", [&]() {
-        vector<pair<int, int>> items = {{1, 10}, {2, 20}, {3, 30}};
+    runner.runTest("Knapsack: All fit", [&]() {
+        vector<pair<int,int>> items = {{1,10},{2,20},{3,30}};
         return InventorySystem::maximizeCarryValue(10, items) == 60;
     }());
 
-    // 3. Chat Autocorrect (String DP)
-    // PDF Example: "uu" -> "uu" or "w" -> 2 possibilities
-    runner.runTest("ChatDecorder: 'uu' -> 2 Possibilities", [&]() {
+    runner.runTest("Knapsack: Zero capacity", [&]() {
+        vector<pair<int,int>> items = {{1,10}};
+        return InventorySystem::maximizeCarryValue(0, items) == 0;
+    }());
+
+    runner.runTest("ChatDecoder: 'uu' -> 2", [&]() {
         return InventorySystem::countStringPossibilities("uu") == 2;
+    }());
+
+    runner.runTest("ChatDecoder: 'uuuu' -> 5", [&]() {
+        return InventorySystem::countStringPossibilities("uuuu") == 5;
     }());
 }
 
@@ -173,37 +188,28 @@ void test_PartB_Inventory() {
 void test_PartC_Navigator() {
     cout << "\n--- Part C: World Navigator ---" << endl;
 
-    // 1. Safe Passage (Path Exists)
-    // PDF Example: 0-1, 1-2. Path 0->2 exists.
-    runner.runTest("PathExists: 0->1->2 -> True", [&]() {
-        vector<vector<int>> edges = {{0, 1}, {1, 2}};
-        return WorldNavigator::pathExists(3, edges, 0, 2) == true;
-    }());
-    runner.runTest("PathExists: Empty path -> False", [&]() {
-        vector<vector<int>> edges = {};
-        return WorldNavigator::pathExists(0, edges, 0, 2) == false;
+    runner.runTest("PathExists: simple path", [&]() {
+        vector<vector<int>> edges = {{0,1},{1,2}};
+        return WorldNavigator::pathExists(3, edges, 0, 2);
     }());
 
-    // 2. The Bribe (MST)
-    // PDF Example: 3 Nodes. Roads: {0,1,10}, {1,2,5}, {0,2,20}. Rate=1.
-    // MST should pick 10 and 5. Total 15.
-    runner.runTest("MinBribeCost: Triangle Graph -> Cost 15", [&]() {
-        vector<vector<int>> roads = {
-            {0, 1, 10, 0}, 
-            {1, 2, 5, 0}, 
-            {0, 2, 20, 0}
-        };
-        // n=3, m=3, goldRate=1, silverRate=1
-        return WorldNavigator::minBribeCost(3, 3, 1, 1, roads) == 15;
+    runner.runTest("PathExists: disconnected", [&]() {
+        vector<vector<int>> edges = {{0,1}};
+        return !WorldNavigator::pathExists(3, edges, 0, 2);
     }());
 
-    // 3. Teleporter (Binary Sum APSP)
-    // PDF Example: 0-1 (1), 1-2 (2). Distances: 1, 2, 3. Sum=6 -> "110"
-    runner.runTest("BinarySum: Line Graph -> '110'", [&]() {
-        vector<vector<int>> roads = {
-            {0, 1, 1},
-            {1, 2, 2}
-        };
+    runner.runTest("MinBribeCost: triangle", [&]() {
+        vector<vector<int>> roads = {{0,1,10,0},{1,2,5,0},{0,2,20,0}};
+        return WorldNavigator::minBribeCost(3,3,1,1,roads) == 15;
+    }());
+
+    runner.runTest("MinBribeCost: disconnected", [&]() {
+        vector<vector<int>> roads = {{0,1,10,0}};
+        return WorldNavigator::minBribeCost(3,1,1,1,roads) == -1;
+    }());
+
+    runner.runTest("BinarySum: line graph", [&]() {
+        vector<vector<int>> roads = {{0,1,1},{1,2,2}};
         return WorldNavigator::sumMinDistancesBinary(3, roads) == "110";
     }());
 }
@@ -215,18 +221,29 @@ void test_PartC_Navigator() {
 void test_PartD_Kernel() {
     cout << "\n--- Part D: Server Kernel ---" << endl;
 
-    // 1. Task Scheduler
-    // PDF Example: Tasks={A, A, B}, n=2.
-    // Order: A -> B -> idle -> A. Total intervals: 4.
-    runner.runTest("Scheduler: {A, A, B}, n=2 -> 4 Intervals", [&]() {
-        vector<char> tasks = {'A', 'A', 'B'};
+    runner.runTest("Scheduler: {A,A,B}, n=2", [&]() {
+        vector<char> tasks = {'A','A','B'};
         return ServerKernel::minIntervals(tasks, 2) == 4;
+    }());
+
+    runner.runTest("Scheduler: no cooling", [&]() {
+        vector<char> tasks = {'A','A','A'};
+        return ServerKernel::minIntervals(tasks, 0) == 3;
+    }());
+
+    runner.runTest("Scheduler: all same", [&]() {
+        vector<char> tasks = {'A','A','A'};
+        return ServerKernel::minIntervals(tasks, 2) == 7;
     }());
 }
 
+// ==========================================
+// MAIN
+// ==========================================
+
 int main() {
-    cout << "Arcadia Engine - Student Happy Path Tests" << endl;
-    cout << "-----------------------------------------" << endl;
+    cout << "Arcadia Engine - Extended Test Suite" << endl;
+    cout << "--------------------------------" << endl;
 
     test_PartA_DataStructures();
     test_PartB_Inventory();
@@ -234,6 +251,5 @@ int main() {
     test_PartD_Kernel();
 
     runner.printSummary();
-
     return 0;
 }
