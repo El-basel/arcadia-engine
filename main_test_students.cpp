@@ -73,10 +73,17 @@ void test_PartA_DataStructures() {
     PlayerTable* table = createPlayerTable();
     runner.runTest("PlayerTable: Insert 'Alice' and Search", [&]() {
         table->insert(101, "Alice");
-        return table->search(101) == "Alice";
+        return table->search(101) == "Bob";
     }());
     delete table;
 
+    table = createPlayerTable();
+    runner.runTest("PlayerTable: Insert 'Alice' then Insert Bob with the same ID to update and Search", [&]() {
+        table->insert(101, "Alice");
+        table->insert(101, "Bob");
+        return table->search(101) == "Bob";
+    }());
+    delete table;
     // 2. Leaderboard (Skip List)
     Leaderboard* board = createLeaderboard();
 
@@ -108,6 +115,12 @@ void test_PartA_DataStructures() {
     runner.runTest("AuctionTree: Insert Items", [&]() {
         tree->insertItem(1, 100);
         tree->insertItem(2, 50);
+        tree->insertItem(4, 50);
+        return true; // Pass if no crash
+    }());
+    runner.runTest("AuctionTree: Delete Items (exist and doesn't exist)", [&]() {
+        tree->deleteItem(1);
+        tree->deleteItem(3);
         return true; // Pass if no crash
     }());
     delete tree;
@@ -125,6 +138,18 @@ void test_PartB_Inventory() {
     runner.runTest("LootSplit: {1, 2, 4} -> Diff 1", [&]() {
         vector<int> coins = {1, 2, 4};
         return InventorySystem::optimizeLootSplit(3, coins) == 1;
+    }());
+    runner.runTest("LootSplit: {2,2} -> Diff 0", [&]() {
+        vector<int> coins = {2, 2};
+        return InventorySystem::optimizeLootSplit(2, coins) == 0;
+    }());
+    runner.runTest("LootSplit: {} -> Diff 0", [&]() {
+        vector<int> coins = {};
+        return InventorySystem::optimizeLootSplit(0, coins) == -1;
+    }());
+    runner.runTest("LootSplit: n=1, {1,2} -> Diff 0", [&]() {
+        vector<int> coins = {1,2};
+        return InventorySystem::optimizeLootSplit(1, coins) == -1;
     }());
 
     // 2. Inventory Packer (Knapsack)
@@ -153,6 +178,10 @@ void test_PartC_Navigator() {
     runner.runTest("PathExists: 0->1->2 -> True", [&]() {
         vector<vector<int>> edges = {{0, 1}, {1, 2}};
         return WorldNavigator::pathExists(3, edges, 0, 2) == true;
+    }());
+    runner.runTest("PathExists: Empty path -> False", [&]() {
+        vector<vector<int>> edges = {};
+        return WorldNavigator::pathExists(0, edges, 0, 2) == false;
     }());
 
     // 2. The Bribe (MST)

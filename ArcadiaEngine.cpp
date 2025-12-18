@@ -312,7 +312,7 @@ private:
         }
     }
     void fix_insertion_violation(Node* node) {
-        while(node != root and node->parent->color == RED) {
+        while(node != root && node->parent != nullptr && node->parent->color == RED) {
             Node* grandparent = node->parent->parent;
             Node* parent = node->parent;
             Node* uncle = get_uncle(node);
@@ -415,13 +415,16 @@ private:
         this->root->color = BLACK;
     }
     Node* search(Node* current, int id, bool& found) {
-        if(current != nullptr && current->id == id) {
-            found = true;
-            return current;
+        Node* node_to_delete = nullptr;
+        if(current != nullptr) {
+            if(current->id == id) {
+                found = true;
+                return current;
+            }
+            node_to_delete = search(current->left, id, found);
+            if(!found) node_to_delete = search(current->right, id, found);
         }
-        search(current->left, id, found);
-        if(!found) search(current->right, id, found);
-        return nullptr;
+        return node_to_delete;
     }
 public:
     ConcreteAuctionTree() {
@@ -439,7 +442,7 @@ public:
         bool found = false;
         Node* node_to_delete = search(this->root, itemID, found);
         if(!found) {
-            std::cout << "Item with ID: " << itemID << " doesn't exist";
+            std::cout << "Item with ID: " << itemID << " doesn't exist\n";
             return;
         }
         Node* actual_node = nullptr; // node with at most 1 child
@@ -449,6 +452,7 @@ public:
         } else {
             actual_node = find_successor(node_to_delete->right);
             node_to_delete->id = actual_node->id;
+            node_to_delete->price = actual_node->price;
         }
         replacement = (actual_node->left != nullptr) ? actual_node->left : actual_node->right;
         if(replacement != nullptr) {
@@ -464,7 +468,7 @@ public:
         if(actual_node->color == BLACK) {
             if(replacement != nullptr && replacement->color ==  RED) {
                 replacement->color = BLACK;
-            } else {
+            } else if(actual_node->parent != nullptr) {
                 fix_double_black(replacement, actual_node->parent);
             }
         }
@@ -477,10 +481,14 @@ public:
 // =========================================================
 
 int InventorySystem::optimizeLootSplit(int n, vector<int>& coins) {
-    int totalSum = 0;
+    if(n < 1 || coins.size() < 1 || n != coins.size()){
+        std::cout << "n must be > 0, coins.size() must be > 1 and n == coins.size()\n";
+        return -1;
+    }
+    long long totalSum = 0;
 
     // Calculate total sum
-    for (int coin : coins) {
+    for (long long coin : coins) {
         totalSum += coin;
     }
 
@@ -489,9 +497,9 @@ int InventorySystem::optimizeLootSplit(int n, vector<int>& coins) {
     dp[0] = true;  // Base case: we can always make sum 0
 
     // For each number in the array
-    for (int i = 0; i < n; i++) {
+    for (long long i = 0; i < n; i++) {
         // Traverse from right to left to avoid using same element twice
-        for (int j = totalSum; j >= coins[i]; j--) {
+        for (long long j = totalSum; j >= coins[i]; j--) {
             if (dp[j - coins[i]]) {
                 dp[j] = true;
             }
@@ -499,8 +507,8 @@ int InventorySystem::optimizeLootSplit(int n, vector<int>& coins) {
     }
 
     // Find the largest sum <= totalSum/2 that is achievable
-    int minDiff = totalSum;
-    for (int j = totalSum / 2; j >= 0; j--) {
+    long long minDiff = totalSum;
+    for (long long j = totalSum / 2; j >= 0; j--) {
         if (dp[j]) {
             // One subset has sum j, other has sum (totalSum - j)
             minDiff = totalSum - 2 * j;
