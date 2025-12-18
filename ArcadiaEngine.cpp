@@ -533,7 +533,23 @@ long long InventorySystem::countStringPossibilities(string s) {
     // Rules: "uu" can be decoded as "w" or "uu"
     //        "nn" can be decoded as "m" or "nn"
     // Count total possible decodings
-    return 0;
+    const long long MOD = 1000000007;
+    int n = s.size();
+    vector<long long> dp(n + 1, 0);
+    dp[0] = 1;
+
+    for (int i = 1; i <= n; i++) {
+        dp[i] = dp[i - 1];
+
+        if (i >= 2) {
+            if (s[i - 1] == 'u' && s[i - 2] == 'u')
+                dp[i] = (dp[i] + dp[i - 2]) % MOD;
+
+            if (s[i - 1] == 'n' && s[i - 2] == 'n')
+                dp[i] = (dp[i] + dp[i - 2]) % MOD;
+        }
+    }
+    return dp[n];
 }
 
 // =========================================================
@@ -576,7 +592,44 @@ long long WorldNavigator::minBribeCost(int n, int m, long long goldRate, long lo
     // roadData[i] = {u, v, goldCost, silverCost}
     // Total cost = goldCost * goldRate + silverCost * silverRate
     // Return -1 if graph cannot be fully connected
-    return -1;
+    vector<int> parent(n), rank(n, 0);
+    for (int i = 0; i < n; i++) parent[i] = i;
+
+    function<int(int)> findSet = [&](int x) {
+        if (parent[x] != x)
+            parent[x] = findSet(parent[x]);
+        return parent[x];
+    };
+
+    auto unionSet = [&](int a, int b) {
+        a = findSet(a);
+        b = findSet(b);
+        if (a == b) return false;
+        if (rank[a] < rank[b]) swap(a, b);
+        parent[b] = a;
+        if (rank[a] == rank[b]) rank[a]++;
+        return true;
+    };
+
+    vector<pair<long long, pair<int,int>>> edges;
+    for (auto& r : roadData) {
+        long long cost = r[2] * goldRate + r[3] * silverRate;
+        edges.push_back({cost, {r[0], r[1]}});
+    }
+
+    sort(edges.begin(), edges.end());
+
+    long long totalCost = 0;
+    int edgesUsed = 0;
+
+    for (auto& e : edges) {
+        if (unionSet(e.second.first, e.second.second)) {
+            totalCost += e.first;
+            edgesUsed++;
+        }
+    }
+
+    return (edgesUsed == n - 1) ? totalCost : -1;;
 }
 
 string WorldNavigator::sumMinDistancesBinary(int n, vector<vector<int>>& roads) {
