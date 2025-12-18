@@ -71,6 +71,9 @@ public:
                 PlayerTable[index].isEmpty = false;
                 count++;
                 return;
+            } else if (PlayerTable[index].playerID == playerID) {
+                PlayerTable[index].name = name;
+                return;
             }
         }
         cout << "Table is Full" << endl;
