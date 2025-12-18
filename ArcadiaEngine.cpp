@@ -546,6 +546,11 @@ long long InventorySystem::countStringPossibilities(string s) {
     //        "nn" can be decoded as "m" or "nn"
     // Count total possible decodings
     const long long MOD = 1000000007;
+    for (char c : s) {
+        if (c == 'w' || c == 'm') {
+            return 0;
+        }
+    }
     int n = s.size();
     vector<long long> dp(n + 1, 0);
     dp[0] = 1;
