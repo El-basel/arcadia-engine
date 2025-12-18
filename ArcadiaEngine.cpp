@@ -13,6 +13,8 @@
 #include <iostream>
 #include <map>
 #include <set>
+#include <unordered_map>
+#include <unordered_set>
 
 using namespace std;
 
@@ -386,6 +388,7 @@ public:
 // =========================================================
 
 int InventorySystem::optimizeLootSplit(int n, vector<int>& coins) {
+    if(coins.size() < 1 || n < 1) return -1;
     int totalSum = 0;
 
     // Calculate total sum
@@ -441,28 +444,32 @@ long long InventorySystem::countStringPossibilities(string s) {
 
 bool WorldNavigator::pathExists(int n, vector<vector<int>>& edges, int source, int dest) {
     // edges are bidirectional
+    if(n < 1 || edges.size() < 0) return false;
     if(source == dest) return true;
-    vector<vector<int>> adj_list(n);
-    for(const auto& edge : edges) {
+    unordered_map<int, vector<int>> adj_list;
+    for(auto& edge : edges) {
         adj_list[edge[0]].push_back(edge[1]);
         adj_list[edge[1]].push_back(edge[0]);
     }
-    vector<bool> discovered(n, false);
+    unordered_set<int> discovered;
     queue<int> q;
     int v, path_exist;
     q.push(source);
-    discovered[source] = true;
+    discovered.insert(source);
     while(!q.empty()) {
         v = q.front();
         q.pop();
-        for(int y : adj_list[v]) {
-            if(!discovered[y]) {
-                discovered[y] = true;
-                q.push(y);
+        if(v == dest) return true;
+        if(adj_list.find(v) != adj_list.end()) {
+            for(int y : adj_list[v]) {
+                if(discovered.find(y) == discovered.end()) {
+                    discovered.insert(y);
+                    q.push(y);
+                }
             }
         }
     }
-    return discovered[dest];
+    return discovered.find(dest) != discovered.end();
 }
 
 long long WorldNavigator::minBribeCost(int n, int m, long long goldRate, long long silverRate,
