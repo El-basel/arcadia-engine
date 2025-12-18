@@ -486,7 +486,7 @@ public:
 int InventorySystem::optimizeLootSplit(int n, vector<int>& coins) {
     if(n < 1 || coins.size() < 1 || n != coins.size()){
         std::cout << "n must be > 0, coins.size() must be > 1 and n == coins.size()\n";
-        return -1;
+        return 0;
     }
     long long totalSum = 0;
 
