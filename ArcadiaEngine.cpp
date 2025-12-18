@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <random>
+#include <functional>
 
 using namespace std;
 
@@ -631,13 +632,43 @@ long long WorldNavigator::minBribeCost(int n, int m, long long goldRate, long lo
 
     return (edgesUsed == n - 1) ? totalCost : -1;;
 }
-
 string WorldNavigator::sumMinDistancesBinary(int n, vector<vector<int>>& roads) {
     // TODO: Implement All-Pairs Shortest Path (Floyd-Warshall)
     // Sum all shortest distances between unique pairs (i < j)
     // Return the sum as a binary string
     // Hint: Handle large numbers carefully
-    return "0";
+    long long INF = 1e9;
+    vector<vector<long long>> dist(n, vector<long long>(n, INF));
+    //the two loops coming are just initialization for the array
+    for (int i = 0; i < n; i++)dist[i][i] = 0;
+    for (auto& road :roads) {
+        int u = road[0];int v = road[1];int w = road[2];
+        dist[u][v] = w;
+    }
+    for (int k = 0; k < n; k++) {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (dist[i][k] != INF && dist[k][j] != INF && dist[i][k] + dist[k][j] < dist[i][j]) {
+                    dist[i][j] = dist[i][k] + dist[k][j];
+                }
+            }
+        }
+    }
+    long long c = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (i != j && dist[i][j] != INF) {
+                c += dist[i][j];
+            }
+        }
+    }
+    if(c ==0) return "0";
+    string binary;
+    while (c > 0) {
+        binary = (c % 2 == 0 ? "0" : "1") + binary;
+        c/= 2;
+    }
+    return binary;
 }
 
 // =========================================================
