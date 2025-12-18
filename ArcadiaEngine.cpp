@@ -108,7 +108,7 @@ private:
         vector<Node*> forward;
         Node(int id, int sc, int level) : playerID(id), score(sc), forward(level, nullptr) {}
     };
-    int MAX_LEVEL = 16;
+    int MAX_LEVEL = 20;
     float P = 0.5;
     Node* head;
     int level; // max height we have rn
