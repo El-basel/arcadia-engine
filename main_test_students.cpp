@@ -212,6 +212,17 @@ void test_PartC_Navigator() {
         vector<vector<int>> roads = {{0,1,1},{1,2,2}};
         return WorldNavigator::sumMinDistancesBinary(3, roads) == "110";
     }());
+    runner.runTest("BinarySum: Disconnected/Directed Check", [&]() {
+        vector<vector<int>> roads = {{0,1,2}, {0,2,8}};
+        string result = WorldNavigator::sumMinDistancesBinary(3, roads);
+
+        // Debug output if it fails
+        if (result != "1010") cout << "    -> Got: " << result << " (Expected 1010)" << endl;
+
+        return result == "1010";
+    }());
+    
+
 }
 
 // ==========================================

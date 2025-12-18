@@ -659,7 +659,7 @@ string WorldNavigator::sumMinDistancesBinary(int n, vector<vector<int>>& roads) 
     for (int i = 0; i < n; i++)dist[i][i] = 0;
     for (auto& road :roads) {
         int u = road[0];int v = road[1];int w = road[2];
-        dist[u][v] = w;
+        if(w < dist[u][v]) dist[u][v] = w;
     }
     for (int k = 0; k < n; k++) {
         for (int i = 0; i < n; i++) {
